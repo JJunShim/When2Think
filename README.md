@@ -1,13 +1,14 @@
 <div align="center">
 
 # When2Think
-### Learning Difficulty-Aware Length Control for Efficient Hybrid Reasoning Models
+### Learning When and How Much to Reason
 
 **Jaejun Shim<sup>1</sup>, HyunJin Kim<sup>1</sup>, Young Jin Kim<sup>2</sup>, JinYeong Bak<sup>1</sup>**
 
-<sup>1</sup> TODO: Affiliation &nbsp;&nbsp; <sup>2</sup> TODO: Affiliation
+<sup>1</sup> Sungkyunkwan University &nbsp;&nbsp; <sup>2</sup> Microsoft
 
 [![Paper](https://img.shields.io/badge/Paper-arXiv-b31b1b?logo=arxiv&logoColor=white)](https://arxiv.org/abs/2609.19671)
+[![Code](https://img.shields.io/badge/Code-GitHub-181717?logo=github&logoColor=white)](https://github.com/JJunShim/When2Think)
 [![HF Paper](https://img.shields.io/badge/🤗-Paper-ffd21e)](https://huggingface.co/papers/2609.19671)
 [![Models](https://img.shields.io/badge/🤗-Models-ffd21e)](https://huggingface.co/collections/junshim/when2think)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey)](LICENSE)
@@ -18,9 +19,10 @@
 
 ## 🔥 News
 
-- **[2026-09-17]** Paper released on [arXiv](https://arxiv.org/abs/2609.19671).
-- **[2026-09-18]** Featured on [Hugging Face Papers](https://huggingface.co/papers/2609.19671).
-- **[2026-09-2X]** `When2Think-1.5B` and `When2Think-ThinkOnly-1.5B` checkpoints released.
+- **[2026-09-17]** The [When2Think preprint](https://arxiv.org/abs/2609.19671) is available on arXiv.
+- **[2026-09]** Released [When2Think-1.5B](https://huggingface.co/junshim/When2Think-1.5B), the full hybrid checkpoint.
+- **[2026-09]** Released [When2Think-ThinkOnly-1.5B](https://huggingface.co/junshim/When2Think-ThinkOnly-1.5B), the THINK-only checkpoint.
+- **[2026-09]** Opened the [When2Think Hugging Face Collection](https://huggingface.co/collections/junshim/when2think).
 
 ## 📌 TL;DR
 
@@ -28,14 +30,8 @@
 > **When2Think** is an RL post-training framework that learns *when to think* (System 2) and *when to answer directly* (System 1),
 > allocating computation per instance based on problem difficulty.
 >
-> On **AIME24**, Pass@3 improves by **+10.0%** while token usage drops by **27.9%** vs. the base model.
+> On **AIME24**, Pass@3 improves by **+10.0 pp** while token usage drops by **27.9%** vs. the base model.
 > On **AIME25**, When2Think reaches **40.0% Pass@3**, outperforming compression-only and routing-only baselines.
-
-<div align="center">
-  <img src="assets/teaser.png" width="90%" alt="When2Think teaser">
-  <br>
-  <em>Figure 1. TODO: accuracy–token trade-off plot or Think/NoThink behavior by difficulty.</em>
-</div>
 
 ## 💡 Motivation
 
@@ -46,17 +42,11 @@
 ## ✨ Highlights
 
 - 🧠 **Learns When to Think** — a single model adaptively switches between **NoThink** (System 1) and **Think** (System 2).
-- ⚡ **Efficient without the tax** — −27.9% tokens and +10.0% Pass@3 on AIME24 relative to the base model.
+- ⚡ **Efficient without the tax** — −27.9% tokens and +10.0 pp Pass@3 on AIME24 relative to the base model.
 - 🪶 **Critic-free & lightweight** — no learned reward model, no online reference-model queries, no critic.
 - 📦 **Standalone inference** — no router, verifier, or difficulty estimator needed at test time.
 
 ## 🧩 Method
-
-<div align="center">
-  <img src="assets/method.png" width="90%" alt="When2Think method overview">
-  <br>
-  <em>Figure 2. Overview of When2Think. TODO: replace with the method figure.</em>
-</div>
 
 - **IDAC (Instance-level Difficulty-Aware Control):** reward shaping that uses pre-computed reference statistics (accuracy and token usage) to regulate reasoning depth per instance.
 - **Verifier-based rewards:** verifiable correctness signal (RLVR).
@@ -65,26 +55,36 @@
 
 ## 📊 Main Results
 
-<!-- TODO: paper의 main table 수치로 교체 (Base / compression baselines / routing baselines / Ours) -->
+### Accuracy and token usage
 
-| Method | AIME24 Pass@3 | AIME24 Tokens | AIME25 Pass@3 | MATH-500 | ... |
-|---|:---:|:---:|:---:|:---:|:---:|
-| DeepSeek-R1-Distill-Qwen-1.5B (base) | TODO | TODO | TODO | TODO | |
-| Compression baseline(s) | TODO | TODO | TODO | TODO | |
-| Routing baseline(s) | TODO | TODO | TODO | TODO | |
-| **When2Think-1.5B (Ours)** | **base +10.0%** | **base −27.9%** | **40.0%** | **TODO** | |
+| Model | GSM-Plus Pass@3 ↑ | GSM-Plus Tokens ↓ | AIME24 Pass@3 ↑ | AIME24 Tokens ↓ | AIME25 Pass@3 ↑ | AIME25 Tokens ↓ |
+|---|---:|---:|---:|---:|---:|---:|
+| R1-Distill-Qwen | 79.4 | **590** | 46.0 | 14,195 | 32.0 | 12,616 |
+| DeepScaleR-Preview | 85.4 | 1,358 | **58.0** | 8,473 | 39.3 | 8,074 |
+| AdaptThink | 83.6 | 716 | 44.7 | **5,806** | 30.7 | **6,883** |
+| ThinkLess | 85.8 | 1,799 | 46.7 | 11,023 | 33.3 | 11,056 |
+| **When2Think** | 85.7 | 1,052 | 56.0 | 10,236 | **40.0** | 9,549 |
+| **When2Think-ThinkOnly** | **86.8** | 1,652 | 57.3 | 10,046 | **40.0** | 9,846 |
 
-<div align="center">
-  <img src="assets/results.png" width="80%" alt="accuracy-efficiency trade-off">
-  <br>
-  <em>Figure 3. TODO: accuracy–efficiency trade-off / Think ratio by difficulty.</em>
-</div>
+> Results report Pass@3 accuracy and average generated tokens per response over five independent sampling runs. The strongest value in each displayed column is bolded. Different models may occupy different accuracy-computation operating points.
+
+### Representative comparison with the backbone
+
+| Benchmark | Metric | R1-Distill-Qwen | When2Think | Difference |
+|---|---|---:|---:|---:|
+| AIME24 | Pass@3 ↑ | 46.0 | **56.0** | **+10.0 pp** |
+| AIME24 | Tokens ↓ | 14,195 | **10,236** | **−27.9%** |
+| AIME25 | Pass@3 ↑ | 32.0 | **40.0** | **+8.0 pp** |
+| AIME25 | Tokens ↓ | 12,616 | **9,549** | **−24.3%** |
+
 
 ## 🚀 Quick Start
 
 ### Installation
 
 ```bash
+git clone https://github.com/JJunShim/When2Think.git
+cd When2Think
 pip install torch transformers accelerate
 # optional, for fast serving
 pip install vllm
@@ -113,7 +113,7 @@ print(tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0])
 ### Serving (vLLM)
 
 ```bash
-vllm serve "junshim/When2Think-1.5B"
+vllm serve junshim/When2Think-1.5B --reasoning-parser deepseek_r1
 ```
 
 The model decides on its own whether to emit an explicit `<think>...</think>` trace (Think) or answer directly (NoThink).
@@ -153,29 +153,6 @@ def parse_deepseek_r1(text: str) -> list[dict]:
 
 **Training data:** [agentica-org/DeepScaleR-Preview-Dataset](https://huggingface.co/datasets/agentica-org/DeepScaleR-Preview-Dataset)
 
-## 🔁 Reproducing Results
-
-<!-- TODO: 실제 repo 구조에 맞게 수정 -->
-
-```bash
-# 1. Pre-compute reference statistics (accuracy / token usage) for IDAC
-bash scripts/compute_reference.sh
-
-# 2. RL post-training
-bash scripts/train.sh
-
-# 3. Benchmark evaluation (AIME24/25, MATH-500, MMLU-Pro, ...)
-bash scripts/eval.sh --model junshim/When2Think-1.5B
-```
-
-## 🗺️ Roadmap
-
-- [x] Paper on arXiv
-- [x] Model checkpoints (1.5B)
-- [ ] Training code
-- [ ] Evaluation pipeline
-- [ ] Larger model sizes
-
 ## 📝 Citation
 
 ```bibtex
@@ -189,13 +166,10 @@ bash scripts/eval.sh --model junshim/When2Think-1.5B
 }
 ```
 
-## 🙏 Acknowledgements
-
-Built on [DeepSeek-R1-Distill-Qwen-1.5B](https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B) and trained with [DeepScaleR-Preview-Dataset](https://huggingface.co/datasets/agentica-org/DeepScaleR-Preview-Dataset). TODO: add RL framework / compute / funding acknowledgements.
-
 ## 📬 Contact
 
-Jaejun Shim · TODO: email · or open an issue.
+Jaejun Shim (`junshim@skku.edu`) · or open an [issue](https://github.com/JJunShim/When2Think/issues).
+Corresponding authors: Young Jin Kim (`youki@microsoft.com`), JinYeong Bak (`jy.bak@skku.edu`).
 
 ## 📄 License
 
