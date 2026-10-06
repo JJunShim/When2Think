@@ -8,7 +8,7 @@
 <sup>1</sup> Sungkyunkwan University &nbsp;&nbsp; <sup>2</sup> Microsoft
 
 [![Paper](https://img.shields.io/badge/Paper-arXiv-b31b1b?logo=arxiv&logoColor=white)](https://arxiv.org/abs/2609.19671)
-[![Code](https://img.shields.io/badge/Code-GitHub-181717?logo=github&logoColor=white)](https://github.com/JJunShim/When2Think)
+[![Code](https://img.shields.io/badge/Repository-GitHub-181717?logo=github&logoColor=white)](https://github.com/JJunShim/When2Think)
 [![HF Paper](https://img.shields.io/badge/🤗-Paper-ffd21e)](https://huggingface.co/papers/2609.19671)
 [![Models](https://img.shields.io/badge/🤗-Models-ffd21e)](https://huggingface.co/collections/junshim/when2think)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey)](LICENSE)
@@ -26,12 +26,17 @@
 
 ## 📌 TL;DR
 
-> Large reasoning models **overthink easy problems and underthink hard ones**.
-> **When2Think** is an RL post-training framework that learns *when to think* (System 2) and *when to answer directly* (System 1),
-> allocating computation per instance based on problem difficulty.
+> Large reasoning models often **overthink easy problems and underthink
+> hard ones**. **When2Think** is an RLVR-based post-training framework
+> that jointly learns:
 >
-> On **AIME24**, Pass@3 improves by **+10.0 pp** while token usage drops by **27.9%** vs. the base model.
-> On **AIME25**, When2Think reaches **40.0% Pass@3**, outperforming compression-only and routing-only baselines.
+> 1. **when to reason**, by selecting between THINK and NOTHINK; and
+> 2. **how much to reason**, by controlling computation within THINK.
+>
+> On **AIME24**, When2Think improves Pass@3 from **46.0% to 56.0%**
+> while reducing average token usage from **14,195 to 10,236**,
+> corresponding to **+10.0 percentage points** and **27.9% fewer
+> tokens** relative to the backbone.
 
 ## 💡 Motivation
 
@@ -41,23 +46,33 @@
 
 ## ✨ Highlights
 
-- 🧠 **Learns When to Think** — a single model adaptively switches between **NoThink** (System 1) and **Think** (System 2).
-- ⚡ **Efficient without the tax** — −27.9% tokens and +10.0 pp Pass@3 on AIME24 relative to the base model.
+- 🧠 **Learns When and How Much to Reason** — jointly controls
+  THINK/NOTHINK selection and computation within THINK.
+- ⚡ **Mitigates the efficiency tax** — improves AIME24 Pass@3 by
+  10.0 percentage points while reducing token usage by 27.9%.
 - 🪶 **Critic-free & lightweight** — no learned reward model, no online reference-model queries, no critic.
 - 📦 **Standalone inference** — no router, verifier, or difficulty estimator needed at test time.
 
 ## 🧩 Method
 
-- **IDAC (Instance-level Difficulty-Aware Control):** reward shaping that uses pre-computed reference statistics (accuracy and token usage) to regulate reasoning depth per instance.
-- **Verifier-based rewards:** verifiable correctness signal (RLVR).
-- **BWS (Batch-Wise Standardization):** converts trajectory rewards into standardized advantages for stable **critic-free** PPO-style optimization.
-- **Importance sampling:** balances exploration between Think and NoThink modes during training.
+1. **Reference pre-computation**  
+   A reference policy estimates per-instance success and token-cost
+   statistics, which are cached for subsequent policy updates.
+2. **THINK/NOTHINK exploration**  
+   We adopt importance-sampled exploration to maintain coverage of both
+   reasoning modes during post-training.
+3. **Instance-level Difficulty-Aware Control**  
+   IDAC uses cached reference statistics and generated token count to
+   construct a correctness-gated efficiency bonus.
+4. **Batch-Wise Standardization**  
+   BWS converts trajectory rewards into standardized advantages for
+   stable critic-free policy optimization.
 
 ## 📊 Main Results
 
 ### Accuracy and token usage
 
-| Model | GSM-Plus Pass@3 ↑ | GSM-Plus Tokens ↓ | AIME24 Pass@3 ↑ | AIME24 Tokens ↓ | AIME25 Pass@3 ↑ | AIME25 Tokens ↓ |
+| Model | GSM-Plus Pass@3 ↑ | Tokens ↓ | AIME24 Pass@3 ↑ | Tokens ↓ | AIME25 Pass@3 ↑ | Tokens ↓ |
 |---|---:|---:|---:|---:|---:|---:|
 | R1-Distill-Qwen | 79.4 | **590** | 46.0 | 14,195 | 32.0 | 12,616 |
 | DeepScaleR-Preview | 85.4 | 1,358 | **58.0** | 8,473 | 39.3 | 8,074 |
@@ -68,23 +83,21 @@
 
 > Results report Pass@3 accuracy and average generated tokens per response over five independent sampling runs. The strongest value in each displayed column is bolded. Different models may occupy different accuracy-computation operating points.
 
-### Representative comparison with the backbone
+### Key Takeaways
 
-| Benchmark | Metric | R1-Distill-Qwen | When2Think | Difference |
-|---|---|---:|---:|---:|
-| AIME24 | Pass@3 ↑ | 46.0 | **56.0** | **+10.0 pp** |
-| AIME24 | Tokens ↓ | 14,195 | **10,236** | **−27.9%** |
-| AIME25 | Pass@3 ↑ | 32.0 | **40.0** | **+8.0 pp** |
-| AIME25 | Tokens ↓ | 12,616 | **9,549** | **−24.3%** |
-
+- **AIME24:** Pass@3 improves from `46.0` to `56.0`, while average
+  token usage decreases from `14,195` to `10,236`.
+- **AIME25:** Pass@3 improves from `32.0` to `40.0`, while average
+  token usage decreases from `12,616` to `9,549`.
+- **THINK-only control remains strong:** The IDAC+BWS variant reaches
+  `57.3` Pass@3 on AIME24, showing that within-THINK computation
+  control contributes independently of mode selection.
 
 ## 🚀 Quick Start
 
 ### Installation
 
 ```bash
-git clone https://github.com/JJunShim/When2Think.git
-cd When2Think
 pip install torch transformers accelerate
 # optional, for fast serving
 pip install vllm
@@ -96,6 +109,8 @@ pip install vllm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 model_path = "junshim/When2Think-1.5B"
+# For always-THINK behavior, use:
+# model_path = "junshim/When2Think-ThinkOnly-1.5B"
 tokenizer = AutoTokenizer.from_pretrained(model_path)
 model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype="auto", device_map="auto")
 
@@ -147,17 +162,15 @@ def parse_deepseek_r1(text: str) -> list[dict]:
 
 | Resource | Description | Link |
 |---|---|---|
-| `When2Think-1.5B` | Main hybrid reasoning model (post-trained from DeepSeek-R1-Distill-Qwen-1.5B) | [🤗 HF](https://huggingface.co/junshim/When2Think-1.5B) |
-| `When2Think-ThinkOnly-1.5B` | TODO: one-line description of this variant | [🤗 HF](https://huggingface.co/junshim/When2Think-ThinkOnly-1.5B) |
-| Collection | All When2Think artifacts | [🤗 Collection](https://huggingface.co/collections/junshim/when2think) |
-
-**Training data:** [agentica-org/DeepScaleR-Preview-Dataset](https://huggingface.co/datasets/agentica-org/DeepScaleR-Preview-Dataset)
+| `When2Think-1.5B` | Hybrid checkpoint that learns THINK/NOTHINK selection and within-THINK computation control | [🤗 Model](https://huggingface.co/junshim/When2Think-1.5B) |
+| `When2Think-ThinkOnly-1.5B` | Always-THINK checkpoint that isolates difficulty-aware computation control without hybrid mode selection | [🤗 Model](https://huggingface.co/junshim/When2Think-ThinkOnly-1.5B) |
+| `When2Think Collection` | Paper and released model artifacts | [🤗 Collection](https://huggingface.co/collections/junshim/when2think) |
 
 ## 📝 Citation
 
 ```bibtex
 @misc{shim2026when2think,
-  title         = {When2Think: Learning Difficulty-Aware Length Control for Efficient Hybrid Reasoning Models},
+  title         = {When2Think: Learning When and How Much to Reason},
   author        = {Jaejun Shim and HyunJin Kim and Young Jin Kim and JinYeong Bak},
   year          = {2026},
   eprint        = {2609.19671},
