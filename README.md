@@ -125,12 +125,6 @@ output_ids = model.generate(**inputs, max_new_tokens=512)
 print(tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0])
 ```
 
-### Serving (vLLM)
-
-```bash
-vllm serve junshim/When2Think-1.5B --reasoning-parser deepseek_r1
-```
-
 The model decides on its own whether to emit an explicit `<think>...</think>` trace (Think) or answer directly (NoThink).
 
 <details>
@@ -157,6 +151,12 @@ def parse_deepseek_r1(text: str) -> list[dict]:
 ```
 
 </details>
+
+### Serving (vLLM)
+
+```bash
+vllm serve junshim/When2Think-1.5B --reasoning-parser deepseek_r1
+```
 
 ## 📦 Released Resources
 
