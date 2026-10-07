@@ -52,6 +52,7 @@
   10.0 percentage points while reducing token usage by 27.9%.
 - 🪶 **Critic-free & lightweight** — no learned reward model, no online reference-model queries, no critic.
 - 📦 **Standalone inference** — no router, verifier, or difficulty estimator needed at test time.
+- 🧩 **Beyond hybrid routing** — even when explicit reasoning is always active, difficulty-aware depth control outperforms standard RFT on most evaluated benchmarks.
 
 ## 🧩 Method
 
